@@ -8,5 +8,9 @@
 
 ## Simple plugin for a go application
 
-WIP
+Uses [Hashicorp's go-plugin](https://github.com/hashicorp/go-plugin.git) to create a `hello-world` kind of plugin
 
+More [here](demo/README.md)
+
+
+## 
