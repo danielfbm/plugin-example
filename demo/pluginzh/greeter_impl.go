@@ -19,8 +19,13 @@ func (g *GreeterHello) Greet(name string) string {
 	return fmt.Sprintf("您好 %s", name)
 }
 
-func (g *GreeterHello) Hi() (string, error) {
-	return "大家好！", nil
+func (g *GreeterHello) Hi(number int) (string, error) {
+	return fmt.Sprintf("大家好！=%d=", number), nil
+}
+
+// Ping adds implementation for PingPonger plugin
+func (g *GreeterHello) Ping() (string, error) {
+	return "pong!", nil
 }
 
 // handshakeConfigs are used to just do a basic handshake between
@@ -45,7 +50,8 @@ func main() {
 	}
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"greeter": &example.GreeterPlugin{Impl: greeter},
+		"greeter":    &example.GreeterPlugin{Impl: greeter},
+		"pingponger": &example.PingPongerPlugin{Impl: greeter},
 	}
 
 	logger.Debug("message from plugin", "foo", "bar")

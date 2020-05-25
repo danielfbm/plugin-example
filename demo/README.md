@@ -174,3 +174,70 @@ var pluginMap = map[string]plugin.Plugin{
 	"greeter": &example.GreeterPlugin{},
 }
 ```
+
+#### 4. Can one plugin implement multiple interfaces?
+
+1. Add another interface `commons/pingpong_interface.go`
+
+```
+// PingPonger is the interface that we're exposing as a plugin.
+type PingPonger interface {
+	Ping() (string, error)
+}
+```
+
+2. Implement RPC server and client on interface
+3. Add interface methods to `pluginzh/greeter_impl.go`
+
+```
+// Ping adds implementation for PingPonger plugin
+func (g *GreeterHello) Ping() (string, error) {
+	return "pong!", nil
+}
+
+//[...]
+
+func main() {
+    //[...]
+    // pluginMap is the map of plugins we can dispense.
+    var pluginMap = map[string]plugin.Plugin{
+        "greeter":    &example.GreeterPlugin{Impl: greeter},
+        "pingponger": &example.PingPongerPlugin{Impl: greeter},
+    }
+    //[...]
+}
+```
+4. Add new interface to `main.go`
+
+
+```
+//[...]
+func main() {
+    // [...]
+
+    for _, client := range plugins {
+        //[...]
+        fmt.Println(greeter.Hi(2))
+
+        fmt.Println("Will try pingponger...")
+		raw2, err2 := rpcClient.Dispense("pingponger")
+		if err2 != nil {
+			fmt.Println("err", err2)
+			continue
+		}
+
+		pinger := raw2.(example.PingPonger)
+		pong, err2 := pinger.Ping()
+		fmt.Println("ping?", pong, "err", err2)
+    }
+}
+
+// pluginMap is the map of plugins we can dispense.
+var pluginMap = map[string]plugin.Plugin{
+	"greeter":    &example.GreeterPlugin{},
+	"pingponger": &example.PingPongerPlugin{},
+}
+```
+
+#### 5. Can a host use plugins in the network (localhost/kubernetes)
+

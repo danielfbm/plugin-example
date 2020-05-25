@@ -19,16 +19,6 @@ func main() {
 		Level:  hclog.Debug,
 	})
 
-	// We're a host! Start by launching the plugin process.
-	/*
-		client := plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig: handshakeConfig,
-			Plugins:         pluginMap,
-			Cmd:             exec.Command("./pluginzh/greeter"),
-			Logger:          logger,
-		})
-		defer client.Kill()
-	*/
 	plugins, err := loadPlugins(logger)
 	if err != nil {
 		log.Fatal(err)
@@ -54,26 +44,18 @@ func main() {
 		fmt.Println(greeter.Greet("some name here"))
 
 		fmt.Println(greeter.Hi(2))
+
+		fmt.Println("Will try pingponger...")
+		raw2, err2 := rpcClient.Dispense("pingponger")
+		if err2 != nil {
+			fmt.Println("err", err2)
+			continue
+		}
+
+		pinger := raw2.(example.PingPonger)
+		pong, err2 := pinger.Ping()
+		fmt.Println("ping?", pong, "err", err2)
 	}
-
-	// // Connect via RPC
-	// rpcClient, err := client.Client()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // Request the plugin
-	// raw, err := rpcClient.Dispense("greeter")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // We should have a Greeter now! This feels like a normal interface
-	// // implementation but is in fact over an RPC connection.
-	// greeter := raw.(example.Greeter)
-	// fmt.Println(greeter.Greet("someone"))
-
-	// fmt.Println(greeter.Hi())
 }
 
 // handshakeConfigs are used to just do a basic handshake between
@@ -88,7 +70,8 @@ var handshakeConfig = plugin.HandshakeConfig{
 
 // pluginMap is the map of plugins we can dispense.
 var pluginMap = map[string]plugin.Plugin{
-	"greeter": &example.GreeterPlugin{},
+	"greeter":    &example.GreeterPlugin{},
+	"pingponger": &example.PingPongerPlugin{},
 }
 
 func loadPlugins(logger hclog.Logger) (plugins []*plugin.Client, err error) {
