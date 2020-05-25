@@ -9,6 +9,7 @@ import (
 // Greeter is the interface that we're exposing as a plugin.
 type Greeter interface {
 	Greet(name string) string
+	Hi() (string, error)
 }
 
 // Here is an implementation that talks over RPC
@@ -28,6 +29,18 @@ func (g *GreeterRPC) Greet(name string) string {
 	return resp
 }
 
+func (g *GreeterRPC) Hi() (string, error) {
+	var resp string
+	err := g.client.Call("Plugin.Hi", map[string]interface{}{}, &resp)
+	if err != nil {
+		// You usually want your interfaces to return errors. If they don't,
+		// there isn't much other choice here.
+		return "", err
+	}
+
+	return resp, nil
+}
+
 // Here is the RPC server that GreeterRPC talks to, conforming to
 // the requirements of net/rpc
 type GreeterRPCServer struct {
@@ -38,6 +51,12 @@ type GreeterRPCServer struct {
 func (s *GreeterRPCServer) Greet(args map[string]interface{}, resp *string) error {
 	*resp = s.Impl.Greet(args["name"].(string))
 	return nil
+}
+
+func (s *GreeterRPCServer) Hi(args map[string]interface{}, resp *string) error {
+	var err error
+	*resp, err = s.Impl.Hi()
+	return err
 }
 
 // This is the implementation of plugin.Plugin so we can serve/consume this

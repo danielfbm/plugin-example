@@ -20,30 +20,60 @@ func main() {
 	})
 
 	// We're a host! Start by launching the plugin process.
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command("./plugin/greeter"),
-		Logger:          logger,
-	})
-	defer client.Kill()
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
+	/*
+		client := plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig: handshakeConfig,
+			Plugins:         pluginMap,
+			Cmd:             exec.Command("./pluginzh/greeter"),
+			Logger:          logger,
+		})
+		defer client.Kill()
+	*/
+	plugins, err := loadPlugins(logger)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Request the plugin
-	raw, err := rpcClient.Dispense("greeter")
-	if err != nil {
-		log.Fatal(err)
+	for _, client := range plugins {
+		defer client.Kill()
+		// Connect via RPC
+		rpcClient, err := client.Client()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Request the plugin
+		raw, err := rpcClient.Dispense("greeter")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// We should have a Greeter now! This feels like a normal interface
+		// implementation but is in fact over an RPC connection.
+		greeter := raw.(example.Greeter)
+		fmt.Println(greeter.Greet("someone"))
+
+		fmt.Println(greeter.Hi())
 	}
 
-	// We should have a Greeter now! This feels like a normal interface
-	// implementation but is in fact over an RPC connection.
-	greeter := raw.(example.Greeter)
-	fmt.Println(greeter.Greet("someone"))
+	// // Connect via RPC
+	// rpcClient, err := client.Client()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// // Request the plugin
+	// raw, err := rpcClient.Dispense("greeter")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// // We should have a Greeter now! This feels like a normal interface
+	// // implementation but is in fact over an RPC connection.
+	// greeter := raw.(example.Greeter)
+	// fmt.Println(greeter.Greet("someone"))
+
+	// fmt.Println(greeter.Hi())
 }
 
 // handshakeConfigs are used to just do a basic handshake between
@@ -59,4 +89,24 @@ var handshakeConfig = plugin.HandshakeConfig{
 // pluginMap is the map of plugins we can dispense.
 var pluginMap = map[string]plugin.Plugin{
 	"greeter": &example.GreeterPlugin{},
+}
+
+func loadPlugins(logger hclog.Logger) (plugins []*plugin.Client, err error) {
+	var found []string
+	found, err = plugin.Discover("*.po", "./bin")
+
+	fmt.Println("found", found, "err", err)
+	plugins = make([]*plugin.Client, 0, len(found))
+
+	for _, f := range found {
+		client := plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig: handshakeConfig,
+			Plugins:         pluginMap,
+			Cmd:             exec.Command(f),
+			Logger:          logger,
+		})
+		plugins = append(plugins, client)
+	}
+
+	return
 }
