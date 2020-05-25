@@ -59,7 +59,37 @@ Hello someone
 2020/05/25 10:49:37 Incompatible API version with plugin. Plugin version: 1, Client versions: [2]
 ```
 
-#### 2. How to dynamically call different implementations?
+
+#### 2. Can a breaking change in the interface cause any trouble? (without changing the version)
+
+1. Add a parameter to  `Hi` method `Hi(int) (string, error)`
+2. Remove the parameter from `Greet` method `Greet() string`
+3. Build and try again
+
+*Result: * 
+
+- Step 1 can work successfully, will use a default value (zero value)
+- Step 2 will break the plugin and will not work any calls.
+
+If during the call the `host` uses a default value then it will work:
+
+```
+func (g *GreeterRPC) Greet() string {
+	var resp string
+	err := g.client.Call("Plugin.Greet", map[string]interface{}{
+		"name": "default?",
+	}, &resp)
+	if err != nil {
+		// You usually want your interfaces to return errors. If they don't,
+		// there isn't much other choice here.
+		panic(err)
+	}
+
+	return resp
+}
+```
+
+#### 3. How to dynamically call different implementations?
 
 1. Copy the `plugin` folder as `pluginzh` folder
 2. Implement the new method Hi
@@ -144,4 +174,3 @@ var pluginMap = map[string]plugin.Plugin{
 	"greeter": &example.GreeterPlugin{},
 }
 ```
-

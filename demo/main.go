@@ -51,9 +51,9 @@ func main() {
 		// We should have a Greeter now! This feels like a normal interface
 		// implementation but is in fact over an RPC connection.
 		greeter := raw.(example.Greeter)
-		fmt.Println(greeter.Greet("someone"))
+		fmt.Println(greeter.Greet("some name here"))
 
-		fmt.Println(greeter.Hi())
+		fmt.Println(greeter.Hi(2))
 	}
 
 	// // Connect via RPC
