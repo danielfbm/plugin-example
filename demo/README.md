@@ -175,6 +175,9 @@ var pluginMap = map[string]plugin.Plugin{
 }
 ```
 
+*Result: *It is possible but needs to add a new layer to manage clients
+
+
 #### 4. Can one plugin implement multiple interfaces?
 
 1. Add another interface `commons/pingpong_interface.go`
@@ -239,5 +242,102 @@ var pluginMap = map[string]plugin.Plugin{
 }
 ```
 
-#### 5. Can a host use plugins in the network (localhost/kubernetes)
+*Result: *It is possible, the host needs to add this kind of logic to try multiple plugins over the same client
 
+#### 5. Can a host use plugins in the network (localhost/kubernetes)?
+
+[Hashicorp's go-plugin](https://github.com/hashicorp/go-plugin) does not support connection over the network on linux systems, and only uses this kind of method on windows but binding to 127.0.0.1 making it impossible to access it in the network.
+
+[I forked the repo](https://github.com/danielfbm/go-plugin) and changed few lines of code to support starting a plugin using tcp bindings:
+
+`server.go`:
+
+```
+func serverListener() (net.Listener, error) {
+	if runtime.GOOS == "windows" || os.Getenv("PLUGIN_HOST") != "" {
+		return serverListener_tcp()
+	}
+
+	return serverListener_unix()
+}
+
+// and
+func serverListener_tcp() (net.Listener, error) {
+	//...
+	for port := minPort; port <= maxPort; port++ {
+		address := fmt.Sprintf("0.0.0.0:%d", port)
+		listener, err := net.Listen("tcp", address)
+		if err == nil {
+			return listener, nil
+		}
+	}
+
+	return nil, errors.New("Couldn't bind plugin TCP listener")
+}
+
+```
+
+
+
+##### 5.1 localhost
+
+1. Change the `go.mod` to replace the module
+2. Change the `main.go` to load a plugin over the network
+
+Inside the `loadPlugins` function:
+
+```
+/...
+	if os.Getenv("NETWORK_PLUGIN") != "" {
+		var netTCP net.Addr
+		if netTCP, err = net.ResolveTCPAddr("tcp", os.Getenv("NETWORK_PLUGIN")); err != nil {
+			return
+		}
+		client := plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig: handshakeConfig,
+			Plugins:         pluginMap,
+			Reattach: &plugin.ReattachConfig{
+				Protocol: plugin.ProtocolNetRPC,
+				Addr:     netTCP,
+			},
+			Logger: logger,
+		})
+		plugins = append(plugins, client)
+	}
+/...
+```
+
+3. Recompile `pluginzh` using new version, start using the keywork:
+
+```
+BASIC_PLUGIN=hello PLUGIN_HOST=true ./bin/greeter-zh.po
+```
+
+4. Recompile `basic` and start using the `NETWORK_PLUGIN` envvar. *PS: the port needs to be fetched from the plugin log*
+
+```
+NETWORK_PLUGIN=127.0.0.1:57674 ./basic
+```
+
+*Result: *Yes, but with a custom fork, but the client should be managed separatedly.
+
+##### 5.2 kubernetes
+
+5. Add 2 [`Dockerfiles`](Dockerfile), one for basic and another for the [`pluginzh`](pluginzh/Dockerfile)
+6. Build and push to any registry
+7. Create and expose the plugin
+
+```
+kubectl run pluginzh --image=danielfbm/pluginzh --env=BASIC_PLUGIN=hello --port=7000
+kubectl expose pod pluginzh --port=7000 --target-port=7000
+```
+
+8. Run the basic
+
+```
+kubectl run basic --image=danielfbm/basic --env=NETWORK_PLUGIN=pluginzh:7000
+```
+
+**PS: When using this approach the host should not kill plugins**
+
+*Result: *Yes

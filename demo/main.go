@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	example "github.com/danielfbm/plugin-example/demo/commons"
 	hclog "github.com/hashicorp/go-hclog"
@@ -82,6 +84,10 @@ func loadPlugins(logger hclog.Logger) (plugins []*plugin.Client, err error) {
 	plugins = make([]*plugin.Client, 0, len(found))
 
 	for _, f := range found {
+		continue
+		if strings.Contains(f, "greeter-zh.po") {
+			continue
+		}
 		client := plugin.NewClient(&plugin.ClientConfig{
 			HandshakeConfig: handshakeConfig,
 			Plugins:         pluginMap,
@@ -91,5 +97,21 @@ func loadPlugins(logger hclog.Logger) (plugins []*plugin.Client, err error) {
 		plugins = append(plugins, client)
 	}
 
+	if os.Getenv("NETWORK_PLUGIN") != "" {
+		var netTCP net.Addr
+		if netTCP, err = net.ResolveTCPAddr("tcp", os.Getenv("NETWORK_PLUGIN")); err != nil {
+			return
+		}
+		client := plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig: handshakeConfig,
+			Plugins:         pluginMap,
+			Reattach: &plugin.ReattachConfig{
+				Protocol: plugin.ProtocolNetRPC,
+				Addr:     netTCP,
+			},
+			Logger: logger,
+		})
+		plugins = append(plugins, client)
+	}
 	return
 }
