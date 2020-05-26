@@ -1,0 +1,7 @@
+apiVersion: plugins.danielfbm.github.com/v1alpha1
+kind: Plugin
+metadata:
+  name: plugin-sample
+spec:
+  # Add fields here
+  foo: bar
