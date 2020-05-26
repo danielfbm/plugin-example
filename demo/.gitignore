@@ -1,0 +1,4 @@
+# Ignore binaries
+plugin/greeter
+basic
+bin
