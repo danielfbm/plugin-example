@@ -7,6 +7,7 @@
 2. Accept plugins over the network (in-cluster)
 3. Give a simple health status for each plugin
 4. Make it available over CRD
+5. Allow different implementations for the same plugin type
 
 ## Steps
 
@@ -31,7 +32,11 @@ type Foo interface {
     Foos() (string, error)
 }
 
-type Bars interface {
+type Bar interface {
     Bars() []string
 }
 ```
+
+1. Create a folder `extension` and add the plugin code for the interfaces in the respective files
+2. Implement the basic interface and RPC client and server
+3. Create a `manager.go` to manage loading of plugins
