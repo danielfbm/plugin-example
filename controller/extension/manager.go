@@ -21,6 +21,12 @@ var pluginMap = map[string]plugin.Plugin{
 	"bar": &BarPlugin{},
 }
 
+var HandshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "BASIC_PLUGIN",
+	MagicCookieValue: "hello",
+}
+
 type PluginLoadOptions struct {
 	Config *plugin.ClientConfig
 
@@ -50,6 +56,9 @@ func (opts PluginLoadOptions) Validate() (res PluginLoadOptions, err error) {
 
 func (opts PluginLoadOptions) init() PluginLoadOptions {
 	opts.Config.Plugins = pluginMap
+	if opts.Config.HandshakeConfig.MagicCookieKey == "" {
+		opts.Config.HandshakeConfig = HandshakeConfig
+	}
 	if opts.LocalPluginPath != "" {
 		opts.Config.Cmd = exec.Command(opts.LocalPluginPath)
 		opts.Config.Reattach = nil
@@ -66,6 +75,12 @@ func (opts PluginLoadOptions) init() PluginLoadOptions {
 type clientOptions struct {
 	Client  *plugin.Client
 	Options PluginLoadOptions
+}
+
+func NewManager() Manager {
+	mgr := &manager{}
+	mgr.init()
+	return mgr
 }
 
 type manager struct {

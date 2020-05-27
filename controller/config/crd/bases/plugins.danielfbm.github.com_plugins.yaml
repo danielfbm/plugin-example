@@ -34,13 +34,44 @@ spec:
         spec:
           description: PluginSpec defines the desired state of Plugin
           properties:
-            foo:
-              description: Foo is an example field of Plugin. Edit Plugin_types.go
-                to remove/update
-              type: string
+            local:
+              description: Local local plugin
+              properties:
+                path:
+                  type: string
+              required:
+              - path
+              type: object
+            network:
+              description: Network network plugin
+              properties:
+                address:
+                  type: string
+              required:
+              - address
+              type: object
+          required:
+          - local
+          - network
           type: object
         status:
           description: PluginStatus defines the observed state of Plugin
+          properties:
+            conditions:
+              items:
+                description: Condition generic conditions
+                properties:
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                required:
+                - message
+                - reason
+                type: object
+              type: array
+          required:
+          - conditions
           type: object
       type: object
   version: v1alpha1

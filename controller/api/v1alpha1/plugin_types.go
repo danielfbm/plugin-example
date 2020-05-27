@@ -20,22 +20,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // PluginSpec defines the desired state of Plugin
 type PluginSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Local local plugin
+	Local *LocalPluginSpec `json:"local,omitempty"`
+	// Network network plugin
+	Network *NetworkPluginSpec `json:"network,omitempty"`
+}
 
-	// Foo is an example field of Plugin. Edit Plugin_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type LocalPluginSpec struct {
+	Path string `json:"path"`
+}
+
+type NetworkPluginSpec struct {
+	Address string `json:"address"`
 }
 
 // PluginStatus defines the observed state of Plugin
 type PluginStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []Condition `json:"conditions"`
+}
+
+// Condition generic conditions
+type Condition struct {
+	Type    string `json:"type"`
+	Ready   string `json:"status"`
+	Message string `json:"message,omitempty"`
+	Reason  string `json:"reason,omitempty"`
 }
 
 // +kubebuilder:object:root=true

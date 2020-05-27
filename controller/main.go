@@ -28,6 +28,7 @@ import (
 
 	pluginsv1alpha1 "github.com/danielfbm/plugin-example/controller/api/v1alpha1"
 	"github.com/danielfbm/plugin-example/controller/controllers"
+	ext "github.com/danielfbm/plugin-example/controller/extension"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -46,7 +47,9 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var pluginFolder string
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&pluginFolder, "plugin-folder", "/plugins", "Folder to store local plugins.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -66,6 +69,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	pluginManager := ext.NewManager()
+
 	if err = (&controllers.PluginReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Plugin"),
@@ -74,6 +79,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Plugin")
 		os.Exit(1)
 	}
+
+	mgr.Add(&controllers.PluginLoader{
+		Client:  mgr.GetClient(),
+		Log:     ctrl.Log.WithName("controllers").WithName("PluginLoader"),
+		Scheme:  mgr.GetScheme(),
+		Manager: pluginManager,
+	})
+
+	// mgr.GetClient()
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
