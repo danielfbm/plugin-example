@@ -35,6 +35,10 @@ type PluginLoadOptions struct {
 	LocalPluginPath      string
 }
 
+func (opts PluginLoadOptions) Copy() PluginLoadOptions {
+	return opts
+}
+
 func (opts PluginLoadOptions) Validate() (res PluginLoadOptions, err error) {
 	if opts.Config == nil {
 		err = fmt.Errorf("Config is empty")

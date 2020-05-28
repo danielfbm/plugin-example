@@ -8,6 +8,16 @@ metadata:
   creationTimestamp: null
   name: plugins.plugins.danielfbm.github.com
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.local.path
+    name: Local
+    type: string
+  - JSONPath: .spec.network.path
+    name: Network
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: plugins.danielfbm.github.com
   names:
     kind: Plugin
@@ -15,6 +25,8 @@ spec:
     plural: plugins
     singular: plugin
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Plugin is the Schema for the plugins API
@@ -50,9 +62,6 @@ spec:
               required:
               - address
               type: object
-          required:
-          - local
-          - network
           type: object
         status:
           description: PluginStatus defines the observed state of Plugin
@@ -65,9 +74,13 @@ spec:
                     type: string
                   reason:
                     type: string
+                  status:
+                    type: string
+                  type:
+                    type: string
                 required:
-                - message
-                - reason
+                - status
+                - type
                 type: object
               type: array
           required:

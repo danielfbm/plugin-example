@@ -50,6 +50,10 @@ type Condition struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Local",type=string,JSONPath=`.spec.local.path`
+// +kubebuilder:printcolumn:name="Network",type=string,JSONPath=`.spec.network.path`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // Plugin is the Schema for the plugins API
 type Plugin struct {

@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/hashicorp/go-hclog"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -56,6 +57,14 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	// zap.UseDevMode
+	hcLoggger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Trace,
+		Output:     os.Stderr,
+		JSONFormat: false,
+	})
+	hclog.SetDefault(hcLoggger)
+	// hclog.Default()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -81,10 +90,11 @@ func main() {
 	}
 
 	mgr.Add(&controllers.PluginLoader{
-		Client:  mgr.GetClient(),
-		Log:     ctrl.Log.WithName("controllers").WithName("PluginLoader"),
-		Scheme:  mgr.GetScheme(),
-		Manager: pluginManager,
+		Client:       mgr.GetClient(),
+		Log:          ctrl.Log.WithName("controllers").WithName("PluginLoader"),
+		Scheme:       mgr.GetScheme(),
+		Manager:      pluginManager,
+		PluginFolder: pluginFolder,
 	})
 
 	// mgr.GetClient()

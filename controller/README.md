@@ -59,5 +59,15 @@ make manifests
 
 1. Add `plugin-folder` flag to [main.go](main.go) file and initiate `extension.Manager`
 2. Create and implement [`plugin_loader.go`](controllers/plugin_loader.go)
-3. Add loader to mgr on [main.go](main.go#L80) file
+3. Add loader to mgr on [main.go](main.go#L80) file, set default hclog
+4. Compile plugins, manager, and run
+
+
+### 7. Implement controller
+
+This controller will only do one thing:
+
+1. Check if the plugin is accessible and adds a condition
+2. Check which implementation it serves and add a condition for each
+
 
