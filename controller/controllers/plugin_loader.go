@@ -17,6 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var LocalPluginFinilizer = "local-plugin-finilizer"
+
 type PluginLoader struct {
 	client.Client
 	Log          logr.Logger
@@ -69,8 +71,9 @@ func (r *PluginLoader) newPlugin(name, path string, err error) (res *pluginsv1al
 	}
 	res = &pluginsv1alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
+			Name:       name,
+			Namespace:  "default",
+			Finalizers: []string{LocalPluginFinilizer},
 		},
 		Spec: pluginsv1alpha1.PluginSpec{
 			Local: &pluginsv1alpha1.LocalPluginSpec{

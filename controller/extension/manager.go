@@ -100,6 +100,7 @@ func (m *manager) init() {
 
 func (m *manager) Load(name string, opts PluginLoadOptions) (err error) {
 	m.init()
+	// if m.clients[name]
 	if opts, err = opts.Validate(); err != nil {
 		return
 	}
