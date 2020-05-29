@@ -40,8 +40,7 @@ You can then launch the plugin sample via:
 1. Add a Hi() string, error to the interface `commons/greeter_interface.go`
 2. Compile basic again and run
 
-
-*Result: *Yes, it works when adding new methods, but if the new method is invoked will return an error:
+**Result:** Yes, it works when adding new methods, but if the new method is invoked will return an error:
 
 ```
 2020-05-25T10:48:14.797+0800 [DEBUG] plugin.greeter: message from GreeterHello.Greet: timestamp=2020-05-25T10:48:14.796+0800
@@ -52,7 +51,7 @@ Hello someone
 
 3. If the `ProtocolVersion` changes,increase a number
 
-*Result: *Returns a new error and any calls to the plugin will fail
+**Result: **Returns a new error and any calls to the plugin will fail
 
 ```
 2020-05-25T10:49:37.917+0800 [DEBUG] plugin.greeter: message from plugin: foo=bar timestamp=2020-05-25T10:49:37.917+0800
@@ -66,7 +65,7 @@ Hello someone
 2. Remove the parameter from `Greet` method `Greet() string`
 3. Build and try again
 
-*Result: * 
+**Result:** 
 
 - Step 1 can work successfully, will use a default value (zero value)
 - Step 2 will break the plugin and will not work any calls.
@@ -175,7 +174,7 @@ var pluginMap = map[string]plugin.Plugin{
 }
 ```
 
-*Result: *It is possible but needs to add a new layer to manage clients
+**Result:** It is possible but needs to add a new layer to manage clients
 
 
 #### 4. Can one plugin implement multiple interfaces?
@@ -242,7 +241,7 @@ var pluginMap = map[string]plugin.Plugin{
 }
 ```
 
-*Result: *It is possible, the host needs to add this kind of logic to try multiple plugins over the same client
+**Result:** It is possible, the host needs to add this kind of logic to try multiple plugins over the same client
 
 #### 5. Can a host use plugins in the network (localhost/kubernetes)?
 
@@ -319,7 +318,7 @@ BASIC_PLUGIN=hello PLUGIN_HOST=true ./bin/greeter-zh.po
 NETWORK_PLUGIN=127.0.0.1:57674 ./basic
 ```
 
-*Result: *Yes, but with a custom fork, but the client should be managed separatedly.
+**Result:** Yes, but with a custom fork, but the client should be managed separatedly.
 
 ##### 5.2 kubernetes
 

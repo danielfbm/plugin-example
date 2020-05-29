@@ -12,5 +12,10 @@ Uses [Hashicorp's go-plugin](https://github.com/hashicorp/go-plugin.git) to crea
 
 More [here](demo/README.md)
 
+## Sample controller that uses plugins with `kubebuilder`
 
-## 
+- User [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) to create a controller
+- Creates a local and network plugin abstraction
+- Checks and executes plugins on a controller
+
+More [here](controller/README.md)
