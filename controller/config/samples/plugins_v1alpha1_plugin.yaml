@@ -1,0 +1,8 @@
+apiVersion: plugins.danielfbm.github.com/v1alpha1
+kind: Plugin
+metadata:
+  name: foobar
+spec:
+  # Add fields here
+  network:
+    address: foobar:7000

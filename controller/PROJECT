@@ -1,0 +1,7 @@
+domain: danielfbm.github.com
+repo: github.com/danielfbm/plugin-example/controller
+resources:
+- group: plugins
+  kind: Plugin
+  version: v1alpha1
+version: "2"
