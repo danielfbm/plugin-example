@@ -12,7 +12,7 @@ type Bar interface {
 
 type BarRPC struct{ client *rpc.Client }
 
-func (g *BarRPC) Bars() (resp *[]string) {
+func (g *BarRPC) Bars() (resp []string) {
 	err := g.client.Call("Plugin.Bars", map[string]interface{}{}, &resp)
 	if err != nil {
 		panic(err)

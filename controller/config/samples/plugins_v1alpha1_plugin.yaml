@@ -1,7 +1,8 @@
 apiVersion: plugins.danielfbm.github.com/v1alpha1
 kind: Plugin
 metadata:
-  name: plugin-sample
+  name: foobar
 spec:
   # Add fields here
-  foo: bar
+  network:
+    address: foobar:7000

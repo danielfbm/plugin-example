@@ -1,6 +1,7 @@
 package extension
 
 import (
+	"fmt"
 	"net"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/hashicorp/go-plugin"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Manager interface {
@@ -21,7 +23,7 @@ var pluginMap = map[string]plugin.Plugin{
 	"bar": &BarPlugin{},
 }
 
-var pluginScheme = scheme.GroupResource{
+var pluginScheme = schema.GroupResource{
 	Group:    "plugin",
 	Resource: "plugin",
 }
@@ -54,7 +56,7 @@ func (opts PluginLoadOptions) Validate() (res PluginLoadOptions, err error) {
 	}
 	if opts.LocalPluginPath != "" {
 		if _, err = filepath.EvalSymlinks(opts.LocalPluginPath); err != nil {
-			err = errors.NewIternalError(err)
+			err = errors.NewInternalError(err)
 		}
 
 	} else if opts.NetworkPluginAddress != "" {
@@ -80,6 +82,7 @@ func (opts PluginLoadOptions) init() PluginLoadOptions {
 			Addr:     opts.networkAddress,
 		}
 	}
+	fmt.Println("opts", opts, "reatach", opts.Config.Reattach, "cmd", opts.Config.Cmd, "netAddr", opts.networkAddress)
 	return opts
 }
 
@@ -129,7 +132,7 @@ func (m *manager) Get(name string) (client plugin.ClientProtocol, err error) {
 		return
 	}
 	if client, err = c.Client.Client(); err != nil {
-		err = errors.NewIternalError(err)
+		err = errors.NewInternalError(err)
 	}
 	return
 

@@ -18,13 +18,17 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"github.com/hashicorp/go-hclog"
 
 	pluginsv1alpha1 "github.com/danielfbm/plugin-example/controller/api/v1alpha1"
 	ext "github.com/danielfbm/plugin-example/controller/extension"
@@ -43,18 +47,21 @@ type PluginReconciler struct {
 
 func (r *PluginReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	_ = r.Log.WithValues("plugin", req.NamespacedName)
+	logger := r.Log.WithValues("plugin", req.NamespacedName)
 
 	// Get plugin
 	plgin := &pluginsv1alpha1.Plugin{}
 	if err := r.Client.Get(ctx, req.NamespacedName, plgin); err != nil {
+
 		err = client.IgnoreNotFound(err)
+		logger.Error(err, "get error")
 		return ctrl.Result{}, err
 	}
 
 	// Verifying if it is a local plugin and tried to delete
 	// we should recover the local plugin, update and return
 	if plgin.DeletionTimestamp != nil && plgin.Spec.Local != nil && len(plgin.Finalizers) > 0 {
+		logger.Info("was deleted and is a local plugin... will recover")
 		plgin.DeletionTimestamp = nil
 		err := r.Client.Update(ctx, plgin)
 		return ctrl.Result{}, err
@@ -63,6 +70,7 @@ func (r *PluginReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Check if plugin with the same name is loaded
 	// and if is the same plugin
 	pluginClient, err := r.PluginManager.Get(plgin.Name)
+	logger.Info("get", "err", err, "client", pluginClient)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			netAddr, localPath := "", ""
@@ -71,11 +79,13 @@ func (r *PluginReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			} else if plgin.Spec.Network != nil && plgin.Spec.Network.Address != "" {
 				netAddr = plgin.Spec.Network.Address
 			}
+			logger.Info("will load", "net", netAddr, "path", localPath)
 			err = r.PluginManager.Load(plgin.Name, ext.PluginLoadOptions{
-				Config: &plugin.ClientConfig{Logger: hclog.Default()}
-				LocalPluginPath: localPath,
+				Config:               &plugin.ClientConfig{Logger: hclog.Default()},
+				LocalPluginPath:      localPath,
 				NetworkPluginAddress: netAddr,
 			})
+			logger.Info("load", "err", err)
 			if err != nil {
 				setCondition(plgin, pluginsv1alpha1.Condition{
 					Type:    "Load",
@@ -84,16 +94,17 @@ func (r *PluginReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 					Reason:  "LoadError",
 				})
 				err = r.Client.Update(ctx, plgin)
+				logger.Info("update", "err", err)
 			}
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: err == nil}, err
 	}
 
 	// Validate each plugin and return values
 	setCondition(plgin, fooCheck(pluginClient))
 	setCondition(plgin, barCheck(pluginClient))
 	err = r.Client.Status().Update(ctx, plgin)
-
+	logger.Info("update", "err", err)
 	return ctrl.Result{}, err
 }
 
@@ -107,10 +118,9 @@ func (r *PluginReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-
 func setCondition(plgin *pluginsv1alpha1.Plugin, cond pluginsv1alpha1.Condition) {
 	if plgin.Status.Conditions == nil {
-		plgin.Status.Conditions = make([]pluginsv1alpha1.Condition,0, 2)
+		plgin.Status.Conditions = make([]pluginsv1alpha1.Condition, 0, 2)
 	}
 	found := false
 	for i, current := range plgin.Status.Conditions {
@@ -125,7 +135,7 @@ func setCondition(plgin *pluginsv1alpha1.Plugin, cond pluginsv1alpha1.Condition)
 	}
 }
 
-func fooCheck(pluginClient plugin.Client) (cond pluginsv1alpha1.Condition) {
+func fooCheck(pluginClient plugin.ClientProtocol) (cond pluginsv1alpha1.Condition) {
 	cond = pluginsv1alpha1.Condition{Type: "FooPlugin"}
 	var raw interface{}
 	var err error
@@ -135,7 +145,7 @@ func fooCheck(pluginClient plugin.Client) (cond pluginsv1alpha1.Condition) {
 			cond.Message = err.Error()
 		}
 	}()
-	
+
 	if raw, err = pluginClient.Dispense("foo"); err != nil {
 		cond.Reason = "DispenseFailed"
 		return
@@ -154,8 +164,7 @@ func fooCheck(pluginClient plugin.Client) (cond pluginsv1alpha1.Condition) {
 	return
 }
 
-
-func barCheck(pluginClient plugin.Client) (cond pluginsv1alpha1.Condition) {
+func barCheck(pluginClient plugin.ClientProtocol) (cond pluginsv1alpha1.Condition) {
 	cond = pluginsv1alpha1.Condition{Type: "BarPlugin"}
 	var raw interface{}
 	var err error
@@ -165,7 +174,7 @@ func barCheck(pluginClient plugin.Client) (cond pluginsv1alpha1.Condition) {
 			cond.Message = err.Error()
 		}
 	}()
-	
+
 	if raw, err = pluginClient.Dispense("bar"); err != nil {
 		cond.Reason = "DispenseFailed"
 		return

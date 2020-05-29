@@ -69,5 +69,27 @@ This controller will only do one thing:
 
 1. Check if the plugin is accessible and adds a condition
 2. Check which implementation it serves and add a condition for each
+3. Check the implementation on [plugin_controller.go](controllers/plugin_controller.go)
 
+### 8. Build and deploy
 
+1. Build controller and local plugins: `make docker-build`. Check [`Dockerfile`](Dockerfile) for specific build instructions
+2. Install CRD: `make install`
+3. Push you image and deploy: `make deploy`
+4. verify that everything is working fine with `kubectl`
+
+  `kubectl get pods --all-namespaces` to check if the controller is up and running
+  `kubectl get plugins` to check if the local plugins are loaded and checked
+
+5. Build the foobar plugin `CGO_ENABLED=0 GOOS=linux go build -o plugins/foobar/bin/foobar plugins/foobar/main.go`
+6. Build the docker image `docker build -t danielfbm/foobarplugin -f plugins/foobar/Dockerfile plugins/foobar
+7. Deploy on kubernetes using kubectl `run` and `expose`:
+
+*PS: Depending on your kubectl version `expose` behaviour could be different, adapt accordingly
+
+```
+kubectl run foobar --image=danielfbm/foobarplugin:latest --image-pull-policy=Never --env BASIC_PLUGIN=hello --port 7000
+kubectl expose deploy/foobar --port=7000 --target-port=7000
+```
+
+8. Check plugins and status: `kubectl get plugins`

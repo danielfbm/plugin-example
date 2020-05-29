@@ -59,6 +59,7 @@ func (r *PluginLoader) Start(stopChan <-chan struct{}) error {
 	}
 	r.Log.Info("Load finished...")
 	<-stopChan
+	r.Manager.Stop()
 	return nil
 }
 
