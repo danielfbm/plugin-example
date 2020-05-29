@@ -1,13 +1,13 @@
 package extension
 
 import (
-	"fmt"
 	"net"
 	"os/exec"
 	"path/filepath"
 	"sync"
 
 	"github.com/hashicorp/go-plugin"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Manager interface {
@@ -19,6 +19,11 @@ type Manager interface {
 var pluginMap = map[string]plugin.Plugin{
 	"foo": &FooPlugin{},
 	"bar": &BarPlugin{},
+}
+
+var pluginScheme = scheme.GroupResource{
+	Group:    "plugin",
+	Resource: "plugin",
 }
 
 var HandshakeConfig = plugin.HandshakeConfig{
@@ -41,14 +46,16 @@ func (opts PluginLoadOptions) Copy() PluginLoadOptions {
 
 func (opts PluginLoadOptions) Validate() (res PluginLoadOptions, err error) {
 	if opts.Config == nil {
-		err = fmt.Errorf("Config is empty")
+		err = errors.NewBadRequest("Config is empty")
 		return
 	}
 	if opts.NetworkPluginAddress == "" && opts.LocalPluginPath == "" && opts.Config.Cmd == nil && opts.Config.Reattach == nil {
-		err = fmt.Errorf("No local or network plugin configuration provided")
+		err = errors.NewBadRequest("No local or network plugin configuration provided")
 	}
 	if opts.LocalPluginPath != "" {
-		_, err = filepath.EvalSymlinks(opts.LocalPluginPath)
+		if _, err = filepath.EvalSymlinks(opts.LocalPluginPath); err != nil {
+			err = errors.NewIternalError(err)
+		}
 
 	} else if opts.NetworkPluginAddress != "" {
 		opts.networkAddress, err = net.ResolveTCPAddr("tcp", opts.NetworkPluginAddress)
@@ -117,10 +124,13 @@ func (m *manager) Get(name string) (client plugin.ClientProtocol, err error) {
 	m.init()
 	c, ok := m.clients[name]
 	if !ok {
-		err = fmt.Errorf("No %s plugin found", name)
+		err = errors.NewNotFound(pluginScheme, name)
+		// err = fmt.Errorf("No %s plugin found", name)
 		return
 	}
-	client, err = c.Client.Client()
+	if client, err = c.Client.Client(); err != nil {
+		err = errors.NewIternalError(err)
+	}
 	return
 
 }
