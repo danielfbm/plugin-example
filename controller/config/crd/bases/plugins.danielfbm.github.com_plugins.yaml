@@ -12,7 +12,7 @@ spec:
   - JSONPath: .spec.local.path
     name: Local
     type: string
-  - JSONPath: .spec.network.path
+  - JSONPath: .spec.network.address
     name: Network
     type: string
   - JSONPath: .metadata.creationTimestamp
