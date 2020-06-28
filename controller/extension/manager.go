@@ -19,8 +19,9 @@ type Manager interface {
 }
 
 var pluginMap = map[string]plugin.Plugin{
-	"foo": &FooPlugin{},
-	"bar": &BarPlugin{},
+	"foo":      &FooPlugin{},
+	"bar":      &BarPlugin{},
+	"bar_grpc": &BarPlugin{},
 }
 
 var pluginScheme = schema.GroupResource{

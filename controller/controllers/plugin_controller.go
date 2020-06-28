@@ -103,6 +103,7 @@ func (r *PluginReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Validate each plugin and return values
 	setCondition(plgin, fooCheck(pluginClient))
 	setCondition(plgin, barCheck(pluginClient))
+	setCondition(plgin, barGRPCCheck(pluginClient))
 	err = r.Client.Status().Update(ctx, plgin)
 	logger.Info("update", "err", err)
 	return ctrl.Result{}, err
@@ -176,6 +177,32 @@ func barCheck(pluginClient plugin.ClientProtocol) (cond pluginsv1alpha1.Conditio
 	}()
 
 	if raw, err = pluginClient.Dispense("bar"); err != nil {
+		cond.Reason = "DispenseFailed"
+		return
+	}
+	barClient, ok := raw.(ext.Bar)
+	if !ok {
+		err = fmt.Errorf("Not a Bar interface")
+		cond.Reason = "WrongInterface"
+		return
+	}
+	cond.Message = strings.Join(barClient.Bars(), ",")
+	cond.Ready = "true"
+	return
+}
+
+func barGRPCCheck(pluginClient plugin.ClientProtocol) (cond pluginsv1alpha1.Condition) {
+	cond = pluginsv1alpha1.Condition{Type: "BarGRPCPlugin"}
+	var raw interface{}
+	var err error
+	defer func() {
+		if err != nil {
+			cond.Ready = "false"
+			cond.Message = err.Error()
+		}
+	}()
+
+	if raw, err = pluginClient.Dispense("bar_grpc"); err != nil {
 		cond.Reason = "DispenseFailed"
 		return
 	}

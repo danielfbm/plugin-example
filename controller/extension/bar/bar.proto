@@ -1,0 +1,12 @@
+syntax = "proto3";
+package bar;
+
+message BarsResponse {
+    repeated string value = 1;
+}
+
+message Empty {}
+
+service Bar {
+    rpc Bars(Empty) returns (BarsResponse);
+}
