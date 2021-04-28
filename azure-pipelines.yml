@@ -4,16 +4,23 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- "*"
+pr:
+- "*"
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: GoTool@0
+  inputs:
+    version: '1.16.3'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: Docker@2
+  inputs:
+    containerRegistry: 'danielfbm-dockerhub'
+    repository: 'danielfbm/plugin-example'
+    command: 'buildAndPush'
+    Dockerfile: 'controller/Dockerfile'
+    buildContext: 'controller'
+
