@@ -8,19 +8,27 @@ trigger:
 pr:
 - "*"
 
-pool:
-  vmImage: ubuntu-latest
+stages:
+- stage: "build" 
+  jobs:
+  - job: build
 
-steps:
-- task: GoTool@0
-  inputs:
-    version: '1.16.3'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: GoTool@0
+      inputs:
+        version: '1.16.3'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'danielfbm-dockerhub'
-    repository: 'danielfbm/plugin-example'
-    command: 'buildAndPush'
-    Dockerfile: 'controller/Dockerfile'
-    buildContext: 'controller'
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'danielfbm-dockerhub'
+        repository: 'danielfbm/plugin-example'
+        command: 'buildAndPush'
+        Dockerfile: 'controller/Dockerfile'
+        buildContext: 'controller'
+  
+    - task: KubectlInstaller@0
+      inputs:
+        kubectlVersion: 'latest'
 
