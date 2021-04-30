@@ -93,3 +93,5 @@ kubectl expose deploy/foobar --port=7000 --target-port=7000
 ```
 
 8. Check plugins and status: `kubectl get plugins`
+
+:)
